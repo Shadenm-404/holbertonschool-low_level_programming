@@ -1,7 +1,13 @@
 #include "main.h"
+/**
+	* print_last_digit - prints and returns last digit of an integer
+	* @n: input integer
+	* Return: last digit
+	*/
 int print_last_digit(int n)
 {
 	int d = n % 10;
+
 
 	if (d < 0)
 	d = -d;
