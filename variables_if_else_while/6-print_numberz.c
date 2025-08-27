@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 /**
- * main - Prints all single-digit base-10 numbers starting from 0
+ * main - Prints digits 0..9 using putchar
  *
  * Return: Always 0 (Success)
  */
@@ -11,8 +11,8 @@ int main(void)
 
 	for (i = 0; i <= 9; i++)
 	{
-		/* '0' هو ثابت محرفي نوعه int في C، ولسنا نستخدم متغير char */
-	putchar('0' + i);
+		/* use int; no char vars */
+		putchar('0' + i);
 	}
 	putchar('\n');
 
