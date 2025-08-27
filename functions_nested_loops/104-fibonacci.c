@@ -25,8 +25,10 @@ int main(void)
 	else
 	printf(", %lu", n_lo);
 
-	a_hi = b_hi; a_lo = b_lo;
-	b_hi = n_hi; b_lo = n_lo;
+	a_hi = b_hi;
+	a_lo = b_lo;
+	b_hi = n_hi;
+	b_lo = n_lo;
 	}
 
 	printf("\n");
