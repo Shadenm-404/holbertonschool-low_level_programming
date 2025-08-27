@@ -1,7 +1,13 @@
 #include <stdio.h>
+/**
+	* main - Prints all possible combinations of two two-digit numbers
+	*
+	* Return: Always 0 (Success)
+	*/
 int main(void)
 {
 	int a, b;
+
 
 	for (a = 0; a <= 98; a++)
 	{
