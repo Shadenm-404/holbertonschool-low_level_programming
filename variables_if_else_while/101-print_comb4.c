@@ -1,7 +1,13 @@
 #include <stdio.h>
+/**
+	* main - Prints all different combinations of three digits
+	*
+	* Return: Always 0 (Success)
+	*/
 int main(void)
 {
 	int i, j, k;
+
 
 	for (i = 0; i <= 7; i++)
 	{
