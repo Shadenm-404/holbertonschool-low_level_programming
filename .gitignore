@@ -16,3 +16,5 @@ pointers_arrays_strings/2-main.c
 pointers_arrays_strings/2-strncpy
 pointers_arrays_strings/3-main.c
 pointers_arrays_strings/3-strcmp
+pointers_arrays_strings/4-main.c
+pointers_arrays_strings/4-rev_array
