@@ -1,14 +1,26 @@
 #include "main.h"
+
+/**
+ * puts2 - prints every other character of a string
+ * starting with the first character, then a newline.
+ * @str: pointer to the string
+ */
 void puts2(char *str)
 {
-	int i;
-	if (str == 0)
+	int i = 0;
+
+	if (!str)
 	{
-		_putchar(n);
+		_putchar('\n');
 		return;
 	}
-	for (i = 0; str[i] != 0; i++)
+
+	while (str[i] != '\0')
+	{
+        /* اطبعي الأحرف ذات الفهرس الزوجي: 0,2,4,... */
 		if ((i % 2) == 0)
 			_putchar(str[i]);
-	_putchar(n);
+		i++;
+	}
+	_putchar('\n');
 }
