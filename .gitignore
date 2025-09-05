@@ -8,3 +8,5 @@ pointers_arrays_strings/9-main.c
 pointers_arrays_strings/9-strcpy
 pointers_arrays_strings/100-main.c
 pointers_arrays_strings/100-atoi
+pointers_arrays_strings/0-main.c
+pointers_arrays_strings/0-strcat
