@@ -1,11 +1,12 @@
 #include "main.h"
 
 /**
- * puts_half - prints the second half of a string, then newline
+ * puts_half - prints the second half of a string
  * @str: pointer to string
  *
- * For even length: start at len/2.
- * For odd length:  start at (len - 1)/2 + 1 (تخطي الحرف الأوسط).
+ * Description: Prints the second half of a string, then a newline.
+ * If length is even, start at len / 2. If length is odd, start at
+ * (len - 1) / 2 + 1 to skip the middle character.
  */
 void puts_half(char *str)
 {
