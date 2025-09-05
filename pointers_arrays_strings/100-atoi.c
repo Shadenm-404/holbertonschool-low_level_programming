@@ -5,26 +5,26 @@
  * @s: input string
  *
  * Rules:
- * - نجمع كل علامات '+' و '-' الموجودة قبل أول رقم (في كامل المقدّمة).
- *   كل '-' يقلب الإشارة، و'+' يُتجاهل.
- * - عند الوصول لأول رقم، نقرأ الأرقام المتتالية فقط.
- * - نبني الناتج كسالب دائمًا: result = result * 10 - digit
- *   لتجنّب overflow مع -fsanitize.
- * - إن لم توجد أرقام، نُعيد 0.
+ * - Count all '+' and '-' before the first digit
+ *   (each '-' flips the sign).
+ * - Parse consecutive digits only.
+ * - Build the result as negative to avoid overflow.
+ * - Return 0 if no digits exist.
  * Return: converted integer
  */
 int _atoi(char *s)
 {
 	int i = 0;
 	int sign = 1;
-	int result = 0;   /* نحافظ عليه سالب أثناء البناء */
+	int result = 0;   /* keep negative while building */
 	int started = 0;
-	int d;            /* ملاحظة: تعريف منفصل لتفادي تحذير "Type Array" */
+	int d;
+	int value;
 
 	if (!s)
 		return (0);
 
-	/* اجمع الإشارة من كل ما يسبق أول رقم */
+	/* collect sign from everything before the first digit */
 	while (s[i] != '\0')
 	{
 		if (s[i] == '-')
@@ -34,14 +34,14 @@ int _atoi(char *s)
 			started = 1;
 			break;
 		}
-		/* '+' أو أي رمز آخر نتجاهله */
+		/* '+' or any other char is ignored */
 		i++;
 	}
 
 	if (!started)
 		return (0);
 
-	/* اقرأ الأرقام؛ ابنِ الناتج كسالب لتفادي overflow */
+	/* read digits; build as negative to avoid overflow */
 	while (s[i] >= '0' && s[i] <= '9')
 	{
 		d = s[i] - '0';
@@ -49,6 +49,7 @@ int _atoi(char *s)
 		i++;
 	}
 
-	/* إن كانت الإشارة موجبة، أرجِع موجب؛ وإلا أبقه سالب */
-	return (sign > 0) ? -result : result;
+	/* final sign */
+	value = (sign > 0) ? -result : result;
+	return (value);
 }
