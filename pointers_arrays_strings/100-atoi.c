@@ -5,42 +5,31 @@
  * @s: input string
  *
  * Description:
- * - Skips anything until the first digit is found.
- * - Considers all consecutive '+'/'-' signs immediately before the number.
- * - Resets the sign accumulator when a non-sign, non-digit is seen.
- * - Returns 0 if no digits exist in the string.
- * Return: the converted integer
+ * Scan the string from the start:
+ * - For every '-' before the first digit, flip the sign.
+ * - '+' is ignored.
+ * - When the first digit is reached, parse consecutive digits.
+ * - If no digits exist, return 0.
+ * Return: the converted integer.
  */
 int _atoi(char *s)
 {
-	int i = 0;
-	int sign_acc = 1; /* signs since last non-sign char */
-	int sign = 1;
-	int started = 0;
-	int num = 0;
+	int i = 0, sign = 1, started = 0, num = 0;
 
 	if (!s)
 		return (0);
 
+	/* accumulate sign from all +/- before first digit */
 	while (s[i] != '\0')
 	{
 		if (s[i] == '-')
-		{
-			sign_acc *= -1;
-		}
+			sign *= -1;
 		else if (s[i] == '+')
-		{
-			/* keep sign_acc as is */
-		}
+			; /* ignore */
 		else if (s[i] >= '0' && s[i] <= '9')
 		{
-			sign = sign_acc;
 			started = 1;
 			break;
-		}
-		else
-		{
-			sign_acc = 1; /* reset sign accumulator */
 		}
 		i++;
 	}
