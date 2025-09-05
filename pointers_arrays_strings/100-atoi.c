@@ -15,9 +15,11 @@
  */
 int _atoi(char *s)
 {
-	int i = 0, sign = 1;
-	int result = 0;   /* نحافظ عليه سالب طوال البناء */
+	int i = 0;
+	int sign = 1;
+	int result = 0;   /* نحافظ عليه سالب أثناء البناء */
 	int started = 0;
+	int d;            /* ملاحظة: تعريف منفصل لتفادي تحذير "Type Array" */
 
 	if (!s)
 		return (0);
@@ -42,8 +44,7 @@ int _atoi(char *s)
 	/* اقرأ الأرقام؛ ابنِ الناتج كسالب لتفادي overflow */
 	while (s[i] >= '0' && s[i] <= '9')
 	{
-		int d = s[i] - '0';
-
+		d = s[i] - '0';
 		result = result * 10 - d;
 		i++;
 	}
