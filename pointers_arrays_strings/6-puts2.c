@@ -17,7 +17,6 @@ void puts2(char *str)
 
 	while (str[i] != '\0')
 	{
-        /* اطبعي الأحرف ذات الفهرس الزوجي: 0,2,4,... */
 		if ((i % 2) == 0)
 			_putchar(str[i]);
 		i++;
