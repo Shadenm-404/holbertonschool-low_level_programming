@@ -18,3 +18,5 @@ pointers_arrays_strings/3-main.c
 pointers_arrays_strings/3-strcmp
 pointers_arrays_strings/4-main.c
 pointers_arrays_strings/4-rev_array
+pointers_arrays_strings/5-main.c
+pointers_arrays_strings/5-string_toupper
