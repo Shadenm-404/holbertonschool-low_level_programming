@@ -4,45 +4,49 @@
  * _atoi - convert a string to an integer
  * @s: input string
  *
- * Description:
- * Scan the string from the start:
- * - For every '-' before the first digit, flip the sign.
- * - '+' is ignored.
- * - When the first digit is reached, parse consecutive digits.
- * - If no digits exist, return 0.
- * Return: the converted integer.
+ * Rules:
+ * - اجمع كل إشارات '+' و '-' الموجودة قبل أول رقم (بدون إعادة ضبط).
+ * - عند الوصول لأول رقم، اقرأ الأرقام المتتالية فقط.
+ * - ابنِ الناتج كسالب دومًا: result = result * 10 - digit
+ *   لتجنّب overflow مع -fsanitize.
+ * - إن لم توجد أرقام، أعِد 0.
+ * Return: converted integer
  */
 int _atoi(char *s)
 {
-	int i = 0, sign = 1, started = 0, num = 0;
+	int i = 0, sign = 1;
+	int result = 0; /* نحفظه دائمًا بسالب */
+	int has_digit = 0;
 
 	if (!s)
 		return (0);
 
-	/* accumulate sign from all +/- before first digit */
-	while (s[i] != '\0')
+	/* عدّ علامات + و - قبل أول رقم */
+	while (s[i] != '\0' && (s[i] < '0' || s[i] > '9'))
 	{
 		if (s[i] == '-')
-			sign *= -1;
-		else if (s[i] == '+')
-			; /* ignore */
-		else if (s[i] >= '0' && s[i] <= '9')
-		{
-			started = 1;
-			break;
-		}
+			sign = -sign;
+		/* '+' نتجاهله */
 		i++;
 	}
 
-	if (!started)
+	/* لا يوجد أرقام */
+	if (s[i] == '\0')
 		return (0);
 
-	/* parse digits */
+	/* اقرأ الأرقام وابنِ الناتج كسالب لتفادي overflow */
 	while (s[i] >= '0' && s[i] <= '9')
 	{
-		num = num * 10 + (s[i] - '0');
+		int d = s[i] - '0';
+
+		result = result * 10 - d;
 		i++;
+		has_digit = 1;
 	}
 
-	return (sign * num);
+	if (!has_digit)
+		return (0);
+
+	/* إن كانت الإشارة موجبة أعِد الموجب، وإلا أعِد السالب كما هو */
+	return (sign > 0) ? -result : result;
 }
