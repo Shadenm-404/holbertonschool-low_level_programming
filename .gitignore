@@ -4,3 +4,5 @@ pointers_arrays_strings/6-main.c
 pointers_arrays_strings/6-puts2
 pointers_arrays_strings/8-main.c
 pointers_arrays_strings/8-print_array
+pointers_arrays_strings/9-main.c
+pointers_arrays_strings/9-strcpy
