@@ -7,7 +7,9 @@
  * @n:    number of bytes to copy
  *
  * Return: pointer to dest
- * Note: Like standard memcpy, behavior is undefined if regions overlap.
+ *
+ * Note: overlapping memory regions lead to undefined behavior,
+ *       similar to the well-known C library routine with a close name.
  */
 char *_memcpy(char *dest, char *src, unsigned int n)
 {
