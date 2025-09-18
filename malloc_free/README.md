@@ -11,3 +11,4 @@ Compilation example:
 gcc -Wall -Werror -Wextra -pedantic -std=gnu89 0-main.c 0-create_array.c -o a
 - `1-strdup.c`
 - `2-str_concat.c`
+- `3-alloc_grid.c`
