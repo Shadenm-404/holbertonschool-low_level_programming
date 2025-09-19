@@ -2,13 +2,15 @@
 #define MAIN_H
 
 #include <stdlib.h>
+#include <limits.h>
 
-/**
- * malloc_checked - allocates memory using malloc; exits with 98 on failure
- * @b: number of bytes to allocate
- *
- * Return: pointer to allocated memory
- */
+/* 0. malloc_checked */
 void *malloc_checked(unsigned int b);
+
+/* 1. string_nconcat */
+char *string_nconcat(char *s1, char *s2, unsigned int n);
+
+/* 2. _calloc */
+void *_calloc(unsigned int nmemb, unsigned int size);
 
 #endif /* MAIN_H */
