@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 /**
- * free_dog - frees a dog_t struct and its members
+ * free_dog - frees a dog_t and its dynamic members
  * @d: pointer to dog to free
  */
 void free_dog(dog_t *d)
@@ -14,3 +14,4 @@ void free_dog(dog_t *d)
 	free(d->owner);
 	free(d);
 }
+
