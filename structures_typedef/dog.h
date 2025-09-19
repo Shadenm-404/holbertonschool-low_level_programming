@@ -19,13 +19,9 @@ struct dog
  */
 typedef struct dog dog_t;
 
-<<<<<<< HEAD
-void init_dog(struct dog *d, char *name, float age, char *owner);
-void print_dog(struct dog *d);
-=======
-/* Prototype for task 4 */
->>>>>>> 74efd2b (structures_typedef: add 4-new_dog.c and update dog.h (dog_t + prototype))
+/* Prototypes needed by tasks */
 dog_t *new_dog(char *name, float age, char *owner);
+void free_dog(dog_t *d);
 
 #endif /* DOG_H */
-void free_dog(dog_t *d);
+
