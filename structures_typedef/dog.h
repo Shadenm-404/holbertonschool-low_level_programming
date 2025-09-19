@@ -24,3 +24,4 @@ void print_dog(struct dog *d);
 
 #endif /* DOG_H */
 
+void free_dog(dog_t *d);
