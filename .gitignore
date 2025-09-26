@@ -23,3 +23,8 @@ pointers_arrays_strings/5-string_toupper
 pointers_arrays_strings/6-cap
 holbertonschool_low_level_programming/
 holbertonschool-low_level_programming/
+a
+*.o
+*.out
+*~
+function_pointers/0-main.c
