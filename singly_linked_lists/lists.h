@@ -2,7 +2,7 @@
 #define LISTS_H
 
 #include <stddef.h>
-
+list_t *add_node(list_t **head, const char *str);
 /**
  * struct list_s - singly linked list
  * @str: string - (malloc'ed string)
