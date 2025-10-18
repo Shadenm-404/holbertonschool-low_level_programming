@@ -1,4 +1,3 @@
-cat > 0-read_textfile.c <<'EOF'
 #include <stdlib.h>
 #include "main.h"
 
@@ -53,5 +52,4 @@ ssize_t read_textfile(const char *filename, size_t letters)
 	close(fd);
 	return (wtotal);
 }
-EOF
 
