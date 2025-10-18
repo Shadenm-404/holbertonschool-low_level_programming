@@ -2,16 +2,37 @@
 #include "main.h"
 
 /**
- * read_textfile - reads a text file and prints it to POSIX standard output
- * @filename: path to the file
- * @letters: maximum number of bytes to read and print
+ * write_all - write exactly n bytes to STDOUT
+ * @buf: buffer
+ * @n: number of bytes
  *
- * Return: actual number of bytes printed, or 0 on any failure
+ * Return: bytes written, or -1 on error
+ */
+static ssize_t write_all(const char *buf, ssize_t n)
+{
+	ssize_t total = 0, w;
+
+	while (total < n)
+	{
+		w = write(STDOUT_FILENO, buf + total, n - total);
+		if (w == -1)
+			return (-1);
+		total += w;
+	}
+	return (total);
+}
+
+/**
+ * read_textfile - reads a text file and prints it to STDOUT
+ * @filename: path to file
+ * @letters: max bytes to read and print
+ *
+ * Return: bytes printed, or 0 on failure
  */
 ssize_t read_textfile(const char *filename, size_t letters)
 {
 	int fd;
-	ssize_t rbytes, wbytes, wtotal = 0;
+	ssize_t r;
 	char *buf;
 
 	if (filename == NULL || letters == 0)
@@ -21,35 +42,19 @@ ssize_t read_textfile(const char *filename, size_t letters)
 	if (fd == -1)
 		return (0);
 
-	buf = (char *)malloc(letters);
+	buf = malloc(letters);
 	if (buf == NULL)
 	{
 		close(fd);
 		return (0);
 	}
 
-	rbytes = read(fd, buf, letters);
-	if (rbytes == -1)
-	{
-		free(buf);
-		close(fd);
-		return (0);
-	}
-
-	while (wtotal < rbytes)
-	{
-		wbytes = write(STDOUT_FILENO, buf + wtotal, rbytes - wtotal);
-		if (wbytes == -1)
-		{
-			free(buf);
-			close(fd);
-			return (0);
-		}
-		wtotal += wbytes;
-	}
+	r = read(fd, buf, letters);
+	if (r == -1 || write_all(buf, r) == -1)
+		r = 0;
 
 	free(buf);
 	close(fd);
-	return (wtotal);
+	return (r);
 }
 
