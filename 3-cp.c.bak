@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* Prototypes */
+/* ==== Prototypes ==== */
 static void usage_exit(void);
 static void read_error_exit(const char *file);
 static void write_error_exit(const char *file);
@@ -40,8 +40,9 @@ static void close_error_exit(int fd)
 
 static int open_src(const char *path)
 {
-	int fd = open(path, O_RDONLY);
+	int fd;
 
+	fd = open(path, O_RDONLY);
 	if (fd == -1)
 		read_error_exit(path);
 	return (fd);
@@ -49,8 +50,9 @@ static int open_src(const char *path)
 
 static int open_dst(const char *path)
 {
-	int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+	int fd;
 
+	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
 	if (fd == -1)
 		write_error_exit(path);
 	return (fd);
@@ -77,7 +79,8 @@ static void copy_loop(int fd_from, int fd_to,
 
 static int process_copy(char *src, char *dst)
 {
-	int fd_from, fd_to, c1, c2;
+	int fd_from, fd_to;
+	int c1, c2;
 
 	fd_from = open_src(src);
 	fd_to = open_dst(dst);
