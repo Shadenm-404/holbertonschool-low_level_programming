@@ -2,19 +2,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/**
- * usage_exit - print usage and exit 97
- */
+/* usage -> 97 */
 static void usage_exit(void)
 {
 	dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 	exit(97);
 }
 
-/**
- * close_or_die - close fd or print error and exit 100
- * @fd: file descriptor
- */
+/* close -> 100 */
 static void close_or_die(int fd)
 {
 	if (close(fd) == -1)
@@ -24,15 +19,8 @@ static void close_or_die(int fd)
 	}
 }
 
-/**
- * write_all - write exactly n bytes or exit 99
- * @fd: destination fd
- * @buf: buffer
- * @n: number of bytes
- * @to_name: file name for error message
- */
-static void write_all(int fd, const char *buf, ssize_t n,
-			  const char *to_name)
+/* write exactly n bytes -> 99 on failure */
+static void write_all(int fd, const char *buf, ssize_t n, const char *to)
 {
 	ssize_t off = 0, w;
 
@@ -41,23 +29,16 @@ static void write_all(int fd, const char *buf, ssize_t n,
 		w = write(fd, buf + off, n - off);
 		if (w == -1)
 		{
-			dprintf(STDERR_FILENO,
-				"Error: Can't write to %s\n", to_name);
+			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", to);
 			exit(99);
 		}
 		off += w;
 	}
 }
 
-/**
- * copy_loop - keep reading/writing until EOF, handle read errors (98)
- * @fd_from: source fd
- * @fd_to: dest fd
- * @from_name: source file name
- * @to_name: dest file name
- */
-static void copy_loop(int fd_from, int fd_to,
-			  const char *from_name, const char *to_name)
+/* read->write loop after priming read */
+static void copy_loop(int fd_from, int fd_to, const char *from,
+			  const char *to)
 {
 	char buf[1024];
 	ssize_t r;
@@ -68,19 +49,19 @@ static void copy_loop(int fd_from, int fd_to,
 		if (r == -1)
 		{
 			dprintf(STDERR_FILENO,
-				"Error: Can't read from file %s\n", from_name);
+				"Error: Can't read from file %s\n", from);
 			close_or_die(fd_from);
 			close_or_die(fd_to);
 			exit(98);
 		}
 		if (r == 0)
 			break;
-		write_all(fd_to, buf, r, to_name);
+		write_all(fd_to, buf, r, to);
 	}
 }
 
 /**
- * main - copy using only POSIX syscalls; exits 97/98/99/100
+ * main - POSIX cp with exits 97/98/99/100 (1024-byte buffer)
  * @argc: count
  * @argv: vector
  * Return: 0 on success
@@ -102,7 +83,7 @@ int main(int argc, char *argv[])
 		exit(98);
 	}
 
-	/* Priming read so a forced read-fail yields 98 before touching dest */
+	/* Priming read for checker that forces read() to fail */
 	r = read(fd_from, buf, sizeof(buf));
 	if (r == -1)
 	{
