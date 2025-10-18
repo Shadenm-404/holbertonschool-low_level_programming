@@ -2,19 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/**
- * print_usage_and_exit - prints usage and exits with code 97
- */
-static void print_usage_and_exit(void)
+/* usage -> 97 */
+static void usage_exit(void)
 {
 	dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 	exit(97);
 }
 
-/**
- * close_or_die - closes fd or exits with 100 on failure
- * @fd: file descriptor to close
- */
+/* close -> 100 */
 static void close_or_die(int fd)
 {
 	if (close(fd) == -1)
@@ -24,13 +19,7 @@ static void close_or_die(int fd)
 	}
 }
 
-/**
- * write_fully - writes exactly n bytes; exits 99 on failure
- * @fd: destination fd
- * @buf: buffer
- * @n: number of bytes
- * @to_name: dest file name (for message)
- */
+/* write exactly n bytes -> 99 on failure */
 static void write_fully(int fd, const char *buf, ssize_t n, const char *to_name)
 {
 	ssize_t off = 0, w;
@@ -48,11 +37,11 @@ static void write_fully(int fd, const char *buf, ssize_t n, const char *to_name)
 }
 
 /**
- * main - copies file_from to file_to (POSIX I/O only)
- * @argc: argument count
- * @argv: argument vector
+ * main - copy file_from to file_to using POSIX I/O
+ * @argc: count
+ * @argv: vector
  *
- * Return: 0 on success
+ * Return: 0 on success, exits with 97/98/99/100 on failure
  */
 int main(int argc, char *argv[])
 {
@@ -61,7 +50,7 @@ int main(int argc, char *argv[])
 	char buf[1024];
 
 	if (argc != 3)
-		print_usage_and_exit();
+		usage_exit();
 
 	/* افتح المصدر */
 	fd_from = open(argv[1], O_RDONLY);
@@ -71,7 +60,7 @@ int main(int argc, char *argv[])
 		exit(98);
 	}
 
-	/* جرّب القراءة أولاً قبل فتح الوجهة لضمان 98 عند فشل read */
+	/* جرّب قراءة أول تشنك قبل فتح الوجهة لضمان 98 عند فشل read */
 	r = read(fd_from, buf, 1024);
 	if (r == -1)
 	{
@@ -80,7 +69,7 @@ int main(int argc, char *argv[])
 		exit(98);
 	}
 
-	/* افتح/أنشئ الوجهة الآن */
+	/* افتح/أنشئ الوجهة الآن (0664) */
 	fd_to = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0664);
 	if (fd_to == -1)
 	{
@@ -89,11 +78,11 @@ int main(int argc, char *argv[])
 		exit(99);
 	}
 
-	/* اكتب أول كتلة لو كانت القراءة نجحت */
+	/* اكتب التشنك الأول إن وجد */
 	if (r > 0)
 		write_fully(fd_to, buf, r, argv[2]);
 
-	/* كمّل النسخ */
+	/* كمّل النسخ حتى EOF */
 	while (1)
 	{
 		r = read(fd_from, buf, 1024);
@@ -106,7 +95,6 @@ int main(int argc, char *argv[])
 		}
 		if (r == 0)
 			break;
-
 		write_fully(fd_to, buf, r, argv[2]);
 	}
 
