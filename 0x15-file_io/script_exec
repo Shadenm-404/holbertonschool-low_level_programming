@@ -1,0 +1,1 @@
+ LD_LIBRARY_PATH=. LD_PRELOAD=libfake_read.so ./test_folder/3-cp_0 test_folder/textfile_0 test_folder/textfile_0_copy_2 ; echo $? 
