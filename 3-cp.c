@@ -81,17 +81,14 @@ static int process_copy(char *src, char *dst)
 
 	fd_from = open_src(src);
 	fd_to = open_dst(dst);
-
 	copy_loop(fd_from, fd_to, src, dst);
 
 	c1 = close(fd_from);
 	if (c1 == -1)
 		close_error_exit(fd_from);
-
 	c2 = close(fd_to);
 	if (c2 == -1)
 		close_error_exit(fd_to);
-
 	return (0);
 }
 
@@ -99,6 +96,5 @@ int main(int argc, char *argv[])
 {
 	if (argc != 3)
 		usage_exit();
-
 	return (process_copy(argv[1], argv[2]));
 }
