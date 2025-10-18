@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 /**
- * usage_exit - Print usage and exit with code 97.
+ * usage_exit - Print usage to STDERR and exit with code 97.
  */
 static void usage_exit(void)
 {
@@ -12,8 +12,10 @@ static void usage_exit(void)
 }
 
 /**
- * close_or_die - Close a file descriptor or exit 100 on failure.
+ * close_or_die - Close a file descriptor or exit with code 100 on error.
  * @fd: File descriptor to close.
+ *
+ * Return: Nothing (exits on failure).
  */
 static void close_or_die(int fd)
 {
@@ -25,11 +27,13 @@ static void close_or_die(int fd)
 }
 
 /**
- * write_all - Write exactly n bytes or exit 99 on failure.
- * @fd: Destination fd.
- * @buf: Buffer.
- * @n: Bytes to write.
- * @to: File name for error message.
+ * write_all - Write exactly @n bytes or exit with code 99 on failure.
+ * @fd: Destination file descriptor.
+ * @buf: Buffer to write from.
+ * @n: Number of bytes to write.
+ * @to: Destination filename (for error message).
+ *
+ * Return: Nothing (exits on failure).
  */
 static void write_all(int fd, const char *buf, ssize_t n, const char *to)
 {
@@ -48,11 +52,13 @@ static void write_all(int fd, const char *buf, ssize_t n, const char *to)
 }
 
 /**
- * copy_loop - Copy from source to destination.
- * @fd_from: Source fd.
- * @fd_to: Destination fd.
- * @from: Source filename.
- * @to: Destination filename.
+ * copy_loop - Read chunks from @fd_from and write to @fd_to.
+ * @fd_from: Source file descriptor.
+ * @fd_to: Destination file descriptor.
+ * @from: Source filename (for error message).
+ * @to: Destination filename (for error message).
+ *
+ * Return: Nothing (exits 98/99 on failure).
  */
 static void copy_loop(int fd_from, int fd_to, const char *from, const char *to)
 {
@@ -77,15 +83,20 @@ static void copy_loop(int fd_from, int fd_to, const char *from, const char *to)
 }
 
 /**
- * setup_fds - Open both source and destination, and do priming read.
+ * main - Copy a file using POSIX I/O.
+ * @argc: Argument count.
  * @argv: Argument vector.
- * @buf: Buffer (for priming read).
- * @r: Pointer to store read result.
- * Return: fd_to (opened destination fd).
+ *
+ * Return: 0 on success. Exits with 97/98/99/100 on failure.
  */
-static int setup_fds(char *argv[], char *buf, ssize_t *r)
+int main(int argc, char *argv[])
 {
 	int fd_from, fd_to;
+	char buf[1024];
+	ssize_t r;
+
+	if (argc != 3)
+		usage_exit();
 
 	fd_from = open(argv[1], O_RDONLY);
 	if (fd_from == -1)
@@ -95,8 +106,9 @@ static int setup_fds(char *argv[], char *buf, ssize_t *r)
 		exit(98);
 	}
 
-	*r = read(fd_from, buf, sizeof(buf));
-	if (*r == -1)
+	/* Priming read: ensure read-failure yields 98 before touching dest. */
+	r = read(fd_from, buf, sizeof(buf));
+	if (r == -1)
 	{
 		dprintf(STDERR_FILENO,
 			"Error: Can't read from file %s\n", argv[1]);
@@ -113,30 +125,12 @@ static int setup_fds(char *argv[], char *buf, ssize_t *r)
 		exit(99);
 	}
 
-	if (*r > 0)
-		write_all(fd_to, buf, *r, argv[2]);
+	if (r > 0)
+		write_all(fd_to, buf, r, argv[2]);
+
+	copy_loop(fd_from, fd_to, argv[1], argv[2]);
 
 	close_or_die(fd_from);
-	return (fd_to);
-}
-
-/**
- * main - Copy file_from to file_to using POSIX I/O.
- * @argc: Argument count.
- * @argv: Argument vector.
- * Return: 0 on success, exits 97/98/99/100 on failure.
- */
-int main(int argc, char *argv[])
-{
-	int fd_to;
-	char buf[1024];
-	ssize_t r;
-
-	if (argc != 3)
-		usage_exit();
-
-	fd_to = setup_fds(argv, buf, &r);
-	copy_loop(open(argv[1], O_RDONLY), fd_to, argv[1], argv[2]);
 	close_or_die(fd_to);
 	return (0);
 }
