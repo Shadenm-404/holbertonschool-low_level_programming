@@ -1,97 +1,116 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 
-/* Prototypes */
-static void usage_exit(void);
-static void read_error_exit(const char *f);
-static void write_error_exit(const char *f);
-static void close_error_exit(int fd);
-static int  open_src(const char *p);
-static int  open_dst(const char *p);
-static void copy_loop(int ff, int ft, const char *sn, const char *dn);
-static int  process_copy(char *src, char *dst);
+#define BUF 1024
 
-static void usage_exit(void)
+/**
+ * close_or_die - close fd or exit 100
+ * @fd: file descriptor
+ */
+static void close_or_die(int fd)
 {
-	dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
-	exit(97);
-}
-
-static void read_error_exit(const char *f)
-{
-	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", f);
-	exit(98);
-}
-
-static void write_error_exit(const char *f)
-{
-	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", f);
-	exit(99);
-}
-
-static void close_error_exit(int fd)
-{
-	dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
-	exit(100);
-}
-
-static int open_src(const char *p)
-{
-	int fd = open(p, O_RDONLY);
-
-	if (fd == -1)
-		read_error_exit(p);
-	return (fd);
-}
-
-static int open_dst(const char *p)
-{
-	int fd = open(p, O_WRONLY | O_CREAT | O_TRUNC, 0664);
-
-	if (fd == -1)
-		write_error_exit(p);
-	return (fd);
-}
-
-static void copy_loop(int ff, int ft, const char *sn, const char *dn)
-{
-	char buf[1024];
-	ssize_t r, w;
-
-	while (1)
+	if (close(fd) == -1)
 	{
-		r = read(ff, buf, sizeof(buf));
-		if (r == -1)
-			read_error_exit(sn);
-		if (r == 0)
-			break;
-		w = write(ft, buf, r);
-		if (w == -1 || w != r)
-			write_error_exit(dn);
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
+		exit(100);
 	}
 }
 
-static int process_copy(char *src, char *dst)
+/**
+ * read_retry - read with EINTR retry; exit 98 on error
+ * @fd: src fd
+ * @buf: buffer
+ * @n: bytes to read
+ * @name: src filename (for message)
+ * Return: bytes read (>= 0)
+ */
+static ssize_t read_retry(int fd, char *buf, size_t n, const char *name)
 {
-	int ff = open_src(src), ft = open_dst(dst);
-	int c1 = 0, c2 = 0;
+	ssize_t r;
 
-	copy_loop(ff, ft, src, dst);
+	do {
+		r = read(fd, buf, n);
+	} while (r == -1 && errno == EINTR);
 
-	c1 = close(ff);
-	if (c1 == -1)
-		close_error_exit(ff);
-	c2 = close(ft);
-	if (c2 == -1)
-		close_error_exit(ft);
-	return (0);
+	if (r == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", name);
+		exit(98);
+	}
+	return (r);
 }
 
-int main(int argc, char *argv[])
+/**
+ * write_all - write all n bytes (handles short writes/EINTR), exit 99 on error
+ * @fd: dst fd
+ * @name: dst filename (for message)
+ * @buf: data
+ * @n: bytes to write
+ */
+static void write_all(int fd, const char *name, const char *buf, ssize_t n)
 {
-	if (argc != 3)
-		usage_exit();
-	return (process_copy(argv[1], argv[2]));
+	ssize_t off = 0, w;
+
+	while (off < n)
+	{
+		do {
+			w = write(fd, buf + off, n - off);
+		} while (w == -1 && errno == EINTR);
+
+		if (w == -1)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", name);
+			exit(99);
+		}
+		off += w;
+	}
+}
+
+/**
+ * main - copy file_from to file_to (1 KiB buffer)
+ * @ac: argc
+ * @av: argv
+ * Return: 0 on success
+ */
+int main(int ac, char **av)
+{
+	int f_from, f_to;
+	ssize_t r;
+	char buf[BUF];
+
+	if (ac != 3)
+	{
+		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
+		exit(97);
+	}
+
+	f_from = open(av[1], O_RDONLY);
+	if (f_from == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", av[1]);
+		exit(98);
+	}
+
+	r = read_retry(f_from, buf, BUF, av[1]);
+
+	f_to = open(av[2], O_WRONLY | O_CREAT | O_TRUNC, 0664);
+	if (f_to == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", av[2]);
+		close_or_die(f_from);
+		exit(99);
+	}
+
+	if (r > 0)
+		write_all(f_to, av[2], buf, r);
+
+	while ((r = read_retry(f_from, buf, BUF, av[1])) > 0)
+		write_all(f_to, av[2], buf, r);
+
+	close_or_die(f_from);
+	close_or_die(f_to);
+	return (0);
 }
