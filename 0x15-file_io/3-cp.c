@@ -6,11 +6,7 @@
 char *create_buffer(char *file);
 void close_file(int fd);
 
-/**
- * create_buffer - Allocates 1024 bytes for a buffer.
- * @file: The name of the file buffer is storing chars for.
- * Return: pointer to new buffer, exits 99 on error.
- */
+/* Alloc 1024 bytes (exit 99 on fail) */
 char *create_buffer(char *file)
 {
 	char *buffer = malloc(1024);
@@ -23,10 +19,7 @@ char *create_buffer(char *file)
 	return (buffer);
 }
 
-/**
- * close_file - Closes file descriptors (exits 100 on error).
- * @fd: file descriptor to close.
- */
+/* Safe close (exit 100 on fail) */
 void close_file(int fd)
 {
 	if (close(fd) == -1)
@@ -36,16 +29,11 @@ void close_file(int fd)
 	}
 }
 
-/**
- * main - Copies the contents of a file to another file.
- * @argc: number of arguments.
- * @argv: array of arguments.
- * Return: 0 on success.
- *
- * Exit codes:
- * 97 - wrong arg count
- * 98 - read error on file_from
- * 99 - write/create error on file_to
+/*
+ * cp: exit codes
+ * 97 - wrong args
+ * 98 - read error (file_from)
+ * 99 - write/create error (file_to)
  * 100 - close error
  */
 int main(int argc, char *argv[])
@@ -70,6 +58,17 @@ int main(int argc, char *argv[])
 		return (98);
 	}
 
+	/* اقرأ أولاً. لو فشلت القراءة ← 98 بدون فتح file_to */
+	r = read(from, buffer, 1024);
+	if (r == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+		free(buffer);
+		close_file(from);
+		return (98);
+	}
+
+	/* افتح file_to فقط بعد نجاح أول read */
 	to = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
 	if (to == -1)
 	{
@@ -79,7 +78,8 @@ int main(int argc, char *argv[])
 		return (99);
 	}
 
-	while ((r = read(from, buffer, 1024)) > 0)
+	/* اكتب الـ chunk الأول، ثم أكمل حلقات read/write */
+	while (r > 0)
 	{
 		written = 0;
 		while (written < r)
@@ -95,15 +95,16 @@ int main(int argc, char *argv[])
 			}
 			written += w;
 		}
-	}
 
-	if (r == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
-		free(buffer);
-		close_file(from);
-		close_file(to);
-		return (98);
+		r = read(from, buffer, 1024);
+		if (r == -1)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+			free(buffer);
+			close_file(from);
+			close_file(to);
+			return (98);
+		}
 	}
 
 	free(buffer);
