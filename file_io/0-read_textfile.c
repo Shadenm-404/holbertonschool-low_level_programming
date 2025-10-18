@@ -2,16 +2,16 @@
 #include "main.h"
 
 /**
- * read_textfile - reads a text file and prints it to STDOUT
- * @filename: path to file
- * @letters: max bytes to read and print
+ * read_textfile - reads a text file and prints it to POSIX standard output
+ * @filename: path to the file
+ * @letters: maximum number of bytes to read and print
  *
- * Return: number of bytes printed, or 0 on failure
+ * Return: actual number of bytes printed, or 0 on any failure
  */
 ssize_t read_textfile(const char *filename, size_t letters)
 {
 	int fd;
-	ssize_t rbytes, wbytes, total = 0;
+	ssize_t rbytes, wbytes, wtotal = 0;
 	char *buf;
 
 	if (filename == NULL || letters == 0)
@@ -36,20 +36,20 @@ ssize_t read_textfile(const char *filename, size_t letters)
 		return (0);
 	}
 
-	while (total < rbytes)
+	while (wtotal < rbytes)
 	{
-		wbytes = write(STDOUT_FILENO, buf + total, rbytes - total);
+		wbytes = write(STDOUT_FILENO, buf + wtotal, rbytes - wtotal);
 		if (wbytes == -1)
 		{
 			free(buf);
 			close(fd);
 			return (0);
 		}
-		total += wbytes;
+		wtotal += wbytes;
 	}
 
 	free(buf);
 	close(fd);
-	return (total);
+	return (wtotal);
 }
 
