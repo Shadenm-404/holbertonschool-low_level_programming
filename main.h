@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* Buffer size per task requirement */
 #define BUF_SIZE 1024
 
 char *create_buffer(const char *file);

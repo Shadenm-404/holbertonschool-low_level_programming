@@ -1,130 +1,100 @@
-#! / bin / bash
-#include <stdio.h>      /* dprintf */
-#include <stdlib.h>     /* exit */
-#include <unistd.h>     /* read, write, close */
-#include <fcntl.h>      /* open */
-#include <sys / stat.h>   /* modes */
-
-#define BUF_SIZE 1024
+#include "main.h"
 
 /**
- * main - copy content of a file to another file
- * @ac: argument count
- * @av: argument vector
-<<<<<<< HEAD
- * Return: 0 on success, exits 97/98/99/100 on error
-=======
- * Return: 0 on success; exits 97 / 98 / 99 / 100 on error
->>>>>>> 51aa855 (Betty fix and rebase)
+ * create_buffer - Allocate a 1KB buffer for file I/O.
+ * @file: Name of the output file (for error message context).
+ *
+ * Return: Pointer to the allocated buffer.
+ * Exit: 99 if allocation fails.
  */
-int main(int ac, char **av)
+char *create_buffer(const char *file)
 {
-	int fd_from, fd_to, c1, c2;
-	ssize_t r, w;
-	char buf[BUF_SIZE];
+	char *buffer = malloc(BUF_SIZE);
 
-	if (ac != 3)
+	if (buffer == NULL)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", file);
+		exit(99);
+	}
+	return (buffer);
+}
+
+/**
+ * close_fd - Close a file descriptor with error check.
+ * @fd: The file descriptor to close.
+ *
+ * Exit: 100 if close(2) fails.
+ */
+void close_fd(int fd)
+{
+	if (close(fd) == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
+		exit(100);
+	}
+}
+
+/**
+ * cp - Copy content from one file to another using a 1KB buffer.
+ * @file_from: Source file path.
+ * @file_to: Destination file path.
+ *
+ * Return: 0 on success.
+ * Exit: 98 on read errors, 99 on write/create errors.
+ */
+int cp(const char *file_from, const char *file_to)
+{
+	int fd_from, fd_to, r, w;
+	char *buffer = create_buffer(file_to);
+
+	fd_from = open(file_from, O_RDONLY);
+	if (fd_from == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", file_from);
+		free(buffer), exit(98);
+	}
+	fd_to = open(file_to, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+	if (fd_to == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", file_to);
+		free(buffer), close_fd(fd_from), exit(99);
+	}
+
+	while ((r = read(fd_from, buffer, BUF_SIZE)) > 0)
+	{
+		w = write(fd_to, buffer, r);
+		if (w != r)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", file_to);
+			free(buffer), close_fd(fd_from), close_fd(fd_to), exit(99);
+		}
+	}
+	if (r == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", file_from);
+		free(buffer), close_fd(fd_from), close_fd(fd_to), exit(98);
+	}
+
+	free(buffer);
+	close_fd(fd_from);
+	close_fd(fd_to);
+	return (0);
+}
+
+/**
+ * main - Entry point: validate args and copy a file.
+ * @argc: Argument count.
+ * @argv: Argument vector.
+ *
+ * Return: 0 on success.
+ * Exit: 97 if usage is wrong.
+ */
+int main(int argc, char **argv)
+{
+	if (argc != 3)
 	{
 		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 		exit(97);
 	}
-
-	/* افتحي المصدر أولاً */
-	fd_from = open(av[1], O_RDONLY);
-	if (fd_from == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", av[1]);
-		exit(98);
-	}
-
-	/* أول قراءة: لو فشلت نطلع 98 بدون فتح الوجهة */
-	r = read(fd_from, buf, BUF_SIZE);
-	if (r == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", av[1]);
-		c1 = close(fd_from);
-		if (c1 == -1)
-		{
-			dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_from);
-			exit(100);
-		}
-		exit(98);
-	}
-
-	/* الآن فقط افتحي الوجهة */
-	fd_to = open(av[2], O_WRONLY | O_CREAT | O_TRUNC, 0664);
-	if (fd_to == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", av[2]);
-		c1 = close(fd_from);
-		if (c1 == -1)
-		{
-			dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_from);
-			exit(100);
-		}
-		exit(99);
-	}
-
-	/* اكتبِ الدفعة الأولى ثم كمّلي بقية الدُفعات */
-	do {
-		ssize_t off = 0;
-
-		while (off < r)
-		{
-			w = write(fd_to, buf + off, r - off);
-			if (w == -1)
-			{
-				dprintf(STDERR_FILENO, "Error: Can't write to %s\n", av[2]);
-				c1 = close(fd_from);
-				if (c1 == -1)
-				{
-					dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_from);
-					exit(100);
-				}
-				c2 = close(fd_to);
-				if (c2 == -1)
-				{
-					dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_to);
-					exit(100);
-				}
-				exit(99);
-			}
-			off += w;
-		}
-
-		r = read(fd_from, buf, BUF_SIZE);
-		if (r == -1)
-		{
-			dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", av[1]);
-			c1 = close(fd_from);
-			if (c1 == -1)
-			{
-				dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_from);
-				exit(100);
-			}
-			c2 = close(fd_to);
-			if (c2 == -1)
-			{
-				dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_to);
-				exit(100);
-			}
-			exit(98);
-		}
-	} while (r > 0);
-
-	/* إغلاقات آمنة */
-	c1 = close(fd_from);
-	if (c1 == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_from);
-		exit(100);
-	}
-	c2 = close(fd_to);
-	if (c2 == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_to);
-		exit(100);
-	}
-
-	return (0);
+	return (cp(argv[1], argv[2]));
 }
