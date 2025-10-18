@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 /**
- * print_usage_and_exit - print usage and exit 97
+ * print_usage_and_exit - prints usage and exits with code 97
  */
 static void print_usage_and_exit(void)
 {
@@ -12,22 +12,58 @@ static void print_usage_and_exit(void)
 }
 
 /**
- * main - copies the content of a file to another file
+ * close_or_die - closes fd or exits with 100 on failure
+ * @fd: file descriptor to close
+ */
+static void close_or_die(int fd)
+{
+	if (close(fd) == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
+		exit(100);
+	}
+}
+
+/**
+ * write_fully - writes exactly n bytes; exits 99 on failure
+ * @fd: destination fd
+ * @buf: buffer
+ * @n: number of bytes
+ * @to_name: dest file name (for message)
+ */
+static void write_fully(int fd, const char *buf, ssize_t n, const char *to_name)
+{
+	ssize_t off = 0, w;
+
+	while (off < n)
+	{
+		w = write(fd, buf + off, n - off);
+		if (w == -1)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", to_name);
+			exit(99);
+		}
+		off += w;
+	}
+}
+
+/**
+ * main - copies file_from to file_to (POSIX I/O only)
  * @argc: argument count
  * @argv: argument vector
  *
- * Return: 0 on success, exits with error codes on failure
+ * Return: 0 on success
  */
 int main(int argc, char *argv[])
 {
 	int fd_from, fd_to;
-	ssize_t r, w, written;
-	char buffer[1024];
+	ssize_t r;
+	char buf[1024];
 
 	if (argc != 3)
 		print_usage_and_exit();
 
-	/* open source */
+	/* 1) افتح المصدر */
 	fd_from = open(argv[1], O_RDONLY);
 	if (fd_from == -1)
 	{
@@ -35,55 +71,46 @@ int main(int argc, char *argv[])
 		exit(98);
 	}
 
-	/* open/create destination with 0664, truncate if exists */
+	/* 2) حاول القراءة أولاً قبل فتح الوجهة */
+	r = read(fd_from, buf, 1024);
+	if (r == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+		close_or_die(fd_from);
+		exit(98);
+	}
+
+	/* 3) الآن افتح/أنشئ الوجهة بعد نجاح read الأولى */
 	fd_to = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0664);
 	if (fd_to == -1)
 	{
 		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
-		close(fd_from);
+		close_or_die(fd_from);
 		exit(99);
 	}
 
-	/* copy loop: read 1024 and write fully (handle partial writes) */
+	/* 4) لو في بيانات من القراءة الأولى، اكتبها */
+	if (r > 0)
+		write_fully(fd_to, buf, r, argv[2]);
+
+	/* 5) كمّل القراءة/الكتابة حتى EOF */
 	while (1)
 	{
-		r = read(fd_from, buffer, 1024);
+		r = read(fd_from, buf, 1024);
 		if (r == -1)
 		{
 			dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
-			close(fd_from);
-			close(fd_to);
+			close_or_die(fd_from);
+			close_or_die(fd_to);
 			exit(98);
 		}
 		if (r == 0)
 			break;
 
-		written = 0;
-		while (written < r)
-		{
-			w = write(fd_to, buffer + written, r - written);
-			if (w == -1)
-			{
-				dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
-				close(fd_from);
-				close(fd_to);
-				exit(99);
-			}
-			written += w;
-		}
+		write_fully(fd_to, buf, r, argv[2]);
 	}
 
-	/* close fds with correct fd value in message */
-	if (close(fd_from) == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_from);
-		exit(100);
-	}
-	if (close(fd_to) == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd_to);
-		exit(100);
-	}
-
+	close_or_die(fd_from);
+	close_or_die(fd_to);
 	return (0);
 }

@@ -2,8 +2,13 @@
 
 /**
  * create_file - creates a file and writes text
+<<<<<<< HEAD
  * @filename: name of the file to create
  * @text_content: string to write (NULL creates empty file)
+=======
+ * @filename: file name
+ * @text_content: string to write (NULL -> empty)
+>>>>>>> 5dbba34 (Initialize repo and add file_io tasks)
  *
  * Return: 1 on success, -1 on failure
  */
