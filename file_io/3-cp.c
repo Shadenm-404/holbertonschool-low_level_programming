@@ -20,7 +20,8 @@ static void close_or_die(int fd)
 }
 
 /* write exactly n bytes -> 99 on failure */
-static void write_fully(int fd, const char *buf, ssize_t n, const char *to_name)
+static void write_fully(int fd, const char *buf, ssize_t n,
+			const char *to_name)
 {
 	ssize_t off = 0, w;
 
@@ -29,7 +30,8 @@ static void write_fully(int fd, const char *buf, ssize_t n, const char *to_name)
 		w = write(fd, buf + off, n - off);
 		if (w == -1)
 		{
-			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", to_name);
+			dprintf(STDERR_FILENO,
+				"Error: Can't write to %s\n", to_name);
 			exit(99);
 		}
 		off += w;
@@ -43,7 +45,8 @@ static int open_source(const char *from)
 
 	if (fd == -1)
 	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", from);
+		dprintf(STDERR_FILENO,
+			"Error: Can't read from file %s\n", from);
 		exit(98);
 	}
 	return (fd);
@@ -56,20 +59,21 @@ static int open_dest(const char *to)
 
 	if (fd == -1)
 	{
-		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", to);
+		dprintf(STDERR_FILENO,
+			"Error: Can't write to %s\n", to);
 		exit(99);
 	}
 	return (fd);
 }
 
-/* copy loop -> 98/99 on failures */
-static void copy_streams(int fd_from, int fd_to,
-			 const char *from_name, const char *to_name)
+/* copy remaining chunks after the priming read */
+static void copy_loop(int fd_from, int fd_to,
+			  const char *from_name, const char *to_name)
 {
 	char buf[1024];
 	ssize_t r;
 
-	while (1)
+	for (;;)
 	{
 		r = read(fd_from, buf, sizeof(buf));
 		if (r == -1)
@@ -96,14 +100,34 @@ static void copy_streams(int fd_from, int fd_to,
 int main(int argc, char *argv[])
 {
 	int fd_from, fd_to;
+	char buf[1024];
+	ssize_t r;
 
 	if (argc != 3)
 		usage_exit();
 
+	/* 1) افتح المصدر */
 	fd_from = open_source(argv[1]);
+
+	/* 2) القراءة التمهيدية قبل فتح الوجهة */
+	r = read(fd_from, buf, sizeof(buf));
+	if (r == -1)
+	{
+		dprintf(STDERR_FILENO,
+			"Error: Can't read from file %s\n", argv[1]);
+		close_or_die(fd_from);
+		exit(98);
+	}
+
+	/* 3) الآن افتح/أنشئ الوجهة */
 	fd_to = open_dest(argv[2]);
 
-	copy_streams(fd_from, fd_to, argv[1], argv[2]);
+	/* 4) اكتب التشنك الأول (إن وُجد) */
+	if (r > 0)
+		write_fully(fd_to, buf, r, argv[2]);
+
+	/* 5) كمّل النسخ حتى EOF */
+	copy_loop(fd_from, fd_to, argv[1], argv[2]);
 
 	close_or_die(fd_from);
 	close_or_die(fd_to);
