@@ -1,137 +1,97 @@
-#include "main.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 
-/**
- * usage_exit - Print usage to STDERR and exit with code 97.
- */
+/* Prototypes */
+static void usage_exit(void);
+static void read_error_exit(const char *f);
+static void write_error_exit(const char *f);
+static void close_error_exit(int fd);
+static int  open_src(const char *p);
+static int  open_dst(const char *p);
+static void copy_loop(int ff, int ft, const char *sn, const char *dn);
+static int  process_copy(char *src, char *dst);
+
 static void usage_exit(void)
 {
 	dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 	exit(97);
 }
 
-/**
- * close_or_die - Close a file descriptor or exit with code 100 on error.
- * @fd: File descriptor to close.
- *
- * Return: Nothing (exits on failure).
- */
-static void close_or_die(int fd)
+static void read_error_exit(const char *f)
 {
-	if (close(fd) == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
-		exit(100);
-	}
+	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", f);
+	exit(98);
 }
 
-/**
- * write_all - Write exactly @n bytes or exit with code 99 on failure.
- * @fd: Destination file descriptor.
- * @buf: Buffer to write from.
- * @n: Number of bytes to write.
- * @to: Destination filename (for error message).
- *
- * Return: Nothing (exits on failure).
- */
-static void write_all(int fd, const char *buf, ssize_t n, const char *to)
+static void write_error_exit(const char *f)
 {
-	ssize_t off = 0, w;
-
-	while (off < n)
-	{
-		w = write(fd, buf + off, n - off);
-		if (w == -1)
-		{
-			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", to);
-			exit(99);
-		}
-		off += w;
-	}
+	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", f);
+	exit(99);
 }
 
-/**
- * copy_loop - Read chunks from @fd_from and write to @fd_to.
- * @fd_from: Source file descriptor.
- * @fd_to: Destination file descriptor.
- * @from: Source filename (for error message).
- * @to: Destination filename (for error message).
- *
- * Return: Nothing (exits 98/99 on failure).
- */
-static void copy_loop(int fd_from, int fd_to, const char *from, const char *to)
+static void close_error_exit(int fd)
+{
+	dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
+	exit(100);
+}
+
+static int open_src(const char *p)
+{
+	int fd = open(p, O_RDONLY);
+
+	if (fd == -1)
+		read_error_exit(p);
+	return (fd);
+}
+
+static int open_dst(const char *p)
+{
+	int fd = open(p, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+
+	if (fd == -1)
+		write_error_exit(p);
+	return (fd);
+}
+
+static void copy_loop(int ff, int ft, const char *sn, const char *dn)
 {
 	char buf[1024];
-	ssize_t r;
+	ssize_t r, w;
 
-	for (;;)
+	while (1)
 	{
-		r = read(fd_from, buf, sizeof(buf));
+		r = read(ff, buf, sizeof(buf));
 		if (r == -1)
-		{
-			dprintf(STDERR_FILENO,
-				"Error: Can't read from file %s\n", from);
-			close_or_die(fd_from);
-			close_or_die(fd_to);
-			exit(98);
-		}
+			read_error_exit(sn);
 		if (r == 0)
 			break;
-		write_all(fd_to, buf, r, to);
+		w = write(ft, buf, r);
+		if (w == -1 || w != r)
+			write_error_exit(dn);
 	}
 }
 
-/**
- * main - Copy a file using POSIX I/O.
- * @argc: Argument count.
- * @argv: Argument vector.
- *
- * Return: 0 on success. Exits with 97/98/99/100 on failure.
- */
-int main(int argc, char *argv[])
+static int process_copy(char *src, char *dst)
 {
-	int fd_from, fd_to;
-	char buf[1024];
-	ssize_t r;
+	int ff = open_src(src), ft = open_dst(dst);
+	int c1 = 0, c2 = 0;
 
-	if (argc != 3)
-		usage_exit();
+	copy_loop(ff, ft, src, dst);
 
-	fd_from = open(argv[1], O_RDONLY);
-	if (fd_from == -1)
-	{
-		dprintf(STDERR_FILENO,
-			"Error: Can't read from file %s\n", argv[1]);
-		exit(98);
-	}
-
-	/* Priming read: ensure read-failure yields 98 before touching dest. */
-	r = read(fd_from, buf, sizeof(buf));
-	if (r == -1)
-	{
-		dprintf(STDERR_FILENO,
-			"Error: Can't read from file %s\n", argv[1]);
-		close_or_die(fd_from);
-		exit(98);
-	}
-
-	fd_to = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0664);
-	if (fd_to == -1)
-	{
-		dprintf(STDERR_FILENO,
-			"Error: Can't write to %s\n", argv[2]);
-		close_or_die(fd_from);
-		exit(99);
-	}
-
-	if (r > 0)
-		write_all(fd_to, buf, r, argv[2]);
-
-	copy_loop(fd_from, fd_to, argv[1], argv[2]);
-
-	close_or_die(fd_from);
-	close_or_die(fd_to);
+	c1 = close(ff);
+	if (c1 == -1)
+		close_error_exit(ff);
+	c2 = close(ft);
+	if (c2 == -1)
+		close_error_exit(ft);
 	return (0);
 }
 
+int main(int argc, char *argv[])
+{
+	if (argc != 3)
+		usage_exit();
+	return (process_copy(argv[1], argv[2]));
+}
