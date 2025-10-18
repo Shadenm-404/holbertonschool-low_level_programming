@@ -2,14 +2,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* usage -> 97 */
+/**
+ * usage_exit - Print usage to STDERR and exit with code 97.
+ */
 static void usage_exit(void)
 {
 	dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 	exit(97);
 }
 
-/* close -> 100 */
+/**
+ * close_or_die - Close a file descriptor or exit with code 100 on error.
+ * @fd: File descriptor to close.
+ *
+ * Return: Nothing (exits on failure).
+ */
 static void close_or_die(int fd)
 {
 	if (close(fd) == -1)
@@ -19,7 +26,15 @@ static void close_or_die(int fd)
 	}
 }
 
-/* write exactly n bytes -> 99 on failure */
+/**
+ * write_all - Write exactly @n bytes or exit with code 99 on failure.
+ * @fd: Destination file descriptor.
+ * @buf: Buffer to write from.
+ * @n: Number of bytes to write.
+ * @to: Destination filename (for error message).
+ *
+ * Return: Nothing (exits on failure).
+ */
 static void write_all(int fd, const char *buf, ssize_t n, const char *to)
 {
 	ssize_t off = 0, w;
@@ -36,9 +51,16 @@ static void write_all(int fd, const char *buf, ssize_t n, const char *to)
 	}
 }
 
-/* read->write loop after priming read */
-static void copy_loop(int fd_from, int fd_to, const char *from,
-			  const char *to)
+/**
+ * copy_loop - Read chunks from @fd_from and write to @fd_to.
+ * @fd_from: Source file descriptor.
+ * @fd_to: Destination file descriptor.
+ * @from: Source filename (for error message).
+ * @to: Destination filename (for error message).
+ *
+ * Return: Nothing (exits 98/99 on failure).
+ */
+static void copy_loop(int fd_from, int fd_to, const char *from, const char *to)
 {
 	char buf[1024];
 	ssize_t r;
@@ -61,10 +83,11 @@ static void copy_loop(int fd_from, int fd_to, const char *from,
 }
 
 /**
- * main - POSIX cp with exits 97/98/99/100 (1024-byte buffer)
- * @argc: count
- * @argv: vector
- * Return: 0 on success
+ * main - Copy a file using POSIX I/O.
+ * @argc: Argument count.
+ * @argv: Argument vector.
+ *
+ * Return: 0 on success. Exits with 97/98/99/100 on failure.
  */
 int main(int argc, char *argv[])
 {
@@ -83,7 +106,7 @@ int main(int argc, char *argv[])
 		exit(98);
 	}
 
-	/* Priming read for checker that forces read() to fail */
+	/* Priming read: ensure read-failure yields 98 before touching dest. */
 	r = read(fd_from, buf, sizeof(buf));
 	if (r == -1)
 	{
