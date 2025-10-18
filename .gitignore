@@ -28,3 +28,7 @@ a
 *.out
 *~
 function_pointers/0-main.c
+0x15-file_io/cp
+0x15-file_io/*.bak
+0x15-file_io/from.txt
+0x15-file_io/to.txt
