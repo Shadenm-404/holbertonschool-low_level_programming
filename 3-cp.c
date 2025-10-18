@@ -1,8 +1,9 @@
+#! / bin / bash
 #include <stdio.h>      /* dprintf */
 #include <stdlib.h>     /* exit */
 #include <unistd.h>     /* read, write, close */
 #include <fcntl.h>      /* open */
-#include <sys/stat.h>   /* modes */
+#include <sys / stat.h>   /* modes */
 
 #define BUF_SIZE 1024
 
@@ -10,7 +11,11 @@
  * main - copy content of a file to another file
  * @ac: argument count
  * @av: argument vector
+<<<<<<< HEAD
  * Return: 0 on success, exits 97/98/99/100 on error
+=======
+ * Return: 0 on success; exits 97 / 98 / 99 / 100 on error
+>>>>>>> 51aa855 (Betty fix and rebase)
  */
 int main(int ac, char **av)
 {
