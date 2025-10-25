@@ -5,10 +5,6 @@
  * @str: Pointer to unsigned char string to hash
  *
  * Return: The computed hash as an unsigned long int
- *
- * Description: djb2 by Dan Bernstein.
- * hash = 5381
- * hash = hash * 33 + c
  */
 unsigned long int hash_djb2(const unsigned char *str)
 {
