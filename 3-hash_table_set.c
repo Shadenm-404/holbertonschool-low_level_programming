@@ -1,18 +1,18 @@
 #include "hash_tables.h"
 
 /**
- * hash_table_set - Adds or updates a key/value pair in the hash table
- * @ht: Pointer to hash table
- * @key: The key (must not be empty)
- * @value: The value to associate with the key (must be duplicated)
+ * hash_table_set - Adds or updates a key/value pair in a hash table
+ * @ht: Pointer to the hash table
+ * @key: The key (must not be an empty string)
+ * @value: The value associated with the key (will be duplicated)
  *
- * Return: 1 on success, 0 on failure
+ * Return: 1 if success, 0 otherwise
  */
 int hash_table_set(hash_table_t *ht, const char *key, const char *value)
 {
+	hash_node_t *new_node, *temp;
 	char *value_copy;
 	unsigned long int index;
-	hash_node_t *new_node, *tmp;
 
 	if (ht == NULL || key == NULL || *key == '\0' || value == NULL)
 		return (0);
@@ -22,17 +22,17 @@ int hash_table_set(hash_table_t *ht, const char *key, const char *value)
 		return (0);
 
 	index = key_index((const unsigned char *)key, ht->size);
-	tmp = ht->array[index];
+	temp = ht->array[index];
 
-	while (tmp != NULL)
+	while (temp)
 	{
-		if (strcmp(tmp->key, key) == 0)
+		if (strcmp(temp->key, key) == 0)
 		{
-			free(tmp->value);
-			tmp->value = value_copy;
+			free(temp->value);
+			temp->value = value_copy;
 			return (1);
 		}
-		tmp = tmp->next;
+		temp = temp->next;
 	}
 
 	new_node = malloc(sizeof(hash_node_t));
